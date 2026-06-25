@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "104286011209",
+    "project_id": "ankafitness-app-123",
+    "storage_bucket": "ankafitness-app-123.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:104286011209:android:ff288a4242ba85e3c8a498",
+        "android_client_info": {
+          "package_name": "com.ankafitness.anka_fitness"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCX_Frxe1BF-IVVdZyKlqDX-C6NXNxkBgo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
