@@ -9,11 +9,13 @@ import 'viewmodels/admin_viewmodel.dart';
 import 'viewmodels/auth_viewmodel.dart';
 
 import 'firebase_options.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 /// Uygulama giriş noktası.
 /// Firebase başlatma ve Provider ağacı konfigürasyonu.
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('tr_TR', null);
 
   // Dikey yönlendirme kilitle
   await SystemChrome.setPreferredOrientations([
@@ -61,7 +63,7 @@ void main() async {
           ),
         ),
       ],
-      child: const AnkaFitnessApp(),
+      child: const QrPrototypeApp(),
     ),
   );
 }

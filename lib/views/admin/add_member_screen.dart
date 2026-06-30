@@ -151,16 +151,20 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                 onChanged: (val) {
                   setState(() {
                     _selectedPackage = val;
-                    // Otomatik bitiş tarihi hesapla
-                    final pkg =
-                        adminVM.packages.where((p) => p.name == val).first;
-                    _membershipEnd =
-                        DateTime.now().add(Duration(days: pkg.durationDays));
-                    _endDateController.text =
-                        AppDateUtils.formatShort(_membershipEnd!);
+                    if (val != null) {
+                      // Otomatik bitiş tarihi hesapla
+                      final pkg =
+                          adminVM.packages.where((p) => p.name == val).first;
+                      _membershipEnd =
+                          DateTime.now().add(Duration(days: pkg.durationDays));
+                      _endDateController.text =
+                          AppDateUtils.formatShort(_membershipEnd!);
+                    } else {
+                      _membershipEnd = null;
+                      _endDateController.text = '';
+                    }
                   });
                 },
-                validator: (v) => v == null ? 'Paket seçin' : null,
               ),
               const SizedBox(height: 16),
 
@@ -171,9 +175,6 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                 prefixIcon: Icons.calendar_today_outlined,
                 readOnly: true,
                 onTap: () => _selectDate(context),
-                validator: (v) => v == null || v.isEmpty
-                    ? 'Bitiş tarihi gerekli'
-                    : null,
               ),
               const SizedBox(height: 32),
 
@@ -237,7 +238,6 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
 
   Future<void> _handleSave(AdminViewModel adminVM) async {
     if (!_formKey.currentState!.validate()) return;
-    if (_membershipEnd == null) return;
 
     adminVM.clearMessages();
     final success = await adminVM.addMember(
@@ -245,8 +245,8 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
       password: _passwordController.text,
       fullName: _nameController.text.trim(),
       phone: _phoneController.text.trim(),
-      packageName: _selectedPackage!,
-      membershipEnd: _membershipEnd!,
+      packageName: _selectedPackage,
+      membershipEnd: _membershipEnd,
     );
 
     if (success && mounted) {

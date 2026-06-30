@@ -1,7 +1,9 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../core/constants/app_colors.dart';
 
-/// Üye paneli alt gezinme çubuğu.
+/// Premium üye paneli alt gezinme çubuğu.
+/// Glassmorphism efekti ve animasyonlu seçim göstergesi.
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
@@ -14,34 +16,39 @@ class BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 16,
-            offset: const Offset(0, -4),
+    return ClipRRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface.withValues(alpha: 0.85),
+            border: Border(
+              top: BorderSide(
+                color: Colors.white.withValues(alpha: 0.06),
+                width: 1,
+              ),
+            ),
           ),
-        ],
-      ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(
-                index: 0,
-                icon: Icons.home_rounded,
-                label: 'Ana Sayfa',
+          child: SafeArea(
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildNavItem(
+                    index: 0,
+                    icon: Icons.home_rounded,
+                    label: 'Ana Sayfa',
+                  ),
+                  _buildNavItem(
+                    index: 1,
+                    icon: Icons.fitness_center_rounded,
+                    label: 'Antrenman',
+                  ),
+                ],
               ),
-              _buildNavItem(
-                index: 1,
-                icon: Icons.fitness_center_rounded,
-                label: 'Antrenman',
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -59,33 +66,57 @@ class BottomNavBar extends StatelessWidget {
       onTap: () => onTap(index),
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.primary.withValues(alpha: 0.15)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
+          gradient: isSelected
+              ? LinearGradient(
+                  colors: [
+                    AppColors.primary.withValues(alpha: 0.15),
+                    AppColors.secondary.withValues(alpha: 0.08),
+                  ],
+                )
+              : null,
+          borderRadius: BorderRadius.circular(14),
         ),
-        child: Row(
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              color: isSelected ? AppColors.primary : AppColors.textHint,
-              size: 24,
-            ),
-            if (isSelected) ...[
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  color: AppColors.primary,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              child: Icon(
+                icon,
+                color:
+                    isSelected ? AppColors.primary : AppColors.textHint,
+                size: isSelected ? 26 : 24,
               ),
-            ],
+            ),
+            const SizedBox(height: 4),
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 250),
+              style: TextStyle(
+                color:
+                    isSelected ? AppColors.primary : AppColors.textHint,
+                fontSize: isSelected ? 12 : 11,
+                fontWeight:
+                    isSelected ? FontWeight.w600 : FontWeight.w400,
+              ),
+              child: Text(label),
+            ),
+            const SizedBox(height: 2),
+            // Dot indicator
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              width: isSelected ? 20 : 0,
+              height: 3,
+              decoration: BoxDecoration(
+                gradient: isSelected
+                    ? AppColors.primaryGradient
+                    : null,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
           ],
         ),
       ),

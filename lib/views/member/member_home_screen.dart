@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
@@ -11,8 +12,8 @@ import '../../widgets/membership_card.dart';
 import '../../widgets/dynamic_qr_widget.dart';
 import '../../widgets/bottom_nav_bar.dart';
 
-/// Üye ana ekranı.
-/// Üyelik bilgisi, dinamik QR kod ve alt gezinme.
+/// Premium üye ana ekranı.
+/// Dinamik hoşgeldin mesajı, glassmorphism kartlar ve QR kod.
 class MemberHomeScreen extends StatefulWidget {
   const MemberHomeScreen({super.key});
 
@@ -45,13 +46,37 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
     super.dispose();
   }
 
+  /// Saate göre dinamik karşılama mesajı.
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 6) return 'İyi geceler';
+    if (hour < 12) return 'Günaydın';
+    if (hour < 17) return 'İyi günler';
+    if (hour < 21) return 'İyi akşamlar';
+    return 'İyi geceler';
+  }
+
+  /// Saate göre motivasyon mesajı.
+  String _getMotivation() {
+    final hour = DateTime.now().hour;
+    if (hour < 6) return 'Erken kuş kalkar! 🌟';
+    if (hour < 12) return 'Enerjin doruklarda! 💪';
+    if (hour < 17) return 'Öğle antrenmanı zamanı! 🔥';
+    if (hour < 21) return 'Akşam antrenmanına hazır mısın? 🏋️';
+    return 'Gece kuşu antrenmanı! 🌙';
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_memberVM == null) {
-      return const Scaffold(
-        backgroundColor: AppColors.background,
-        body: Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
+      return Scaffold(
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: AppColors.backgroundGradient,
+          ),
+          child: const Center(
+            child: CircularProgressIndicator(color: AppColors.primary),
+          ),
         ),
       );
     }
@@ -60,26 +85,22 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
       listenable: _memberVM!,
       builder: (context, _) {
         return Scaffold(
-          backgroundColor: AppColors.background,
-          appBar: AppBar(
-            title: const Text('AnkaFitness'),
-            automaticallyImplyLeading: false,
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.logout_rounded),
-                tooltip: 'Çıkış',
-                onPressed: () => _confirmLogout(context),
-              ),
-            ],
+          extendBody: true,
+          body: Container(
+            decoration: const BoxDecoration(
+              gradient: AppColors.backgroundGradient,
+            ),
+            child: SafeArea(
+              bottom: false,
+              child: _currentNavIndex == 0
+                  ? _buildHomePage()
+                  : _buildWorkoutPage(),
+            ),
           ),
-          body: _currentNavIndex == 0
-              ? _buildHomePage()
-              : _buildWorkoutPage(),
           bottomNavigationBar: BottomNavBar(
             currentIndex: _currentNavIndex,
             onTap: (index) {
               if (index == 1) {
-                // Antrenman sekmesine geçiş
                 context.go('/workout');
                 return;
               }
@@ -99,36 +120,113 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
       );
     }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppConstants.paddingMedium),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Hoşgeldin ──
-          Text(
-            'Merhaba, ${user.fullName.split(' ').first} 👋',
-            style: AppTextStyles.h2,
+    return CustomScrollView(
+      slivers: [
+        // ── Custom App Bar ──
+        SliverAppBar(
+          expandedHeight: 120,
+          floating: true,
+          backgroundColor: Colors.transparent,
+          automaticallyImplyLeading: false,
+          flexibleSpace: FlexibleSpaceBar(
+            background: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppConstants.paddingLarge,
+                AppConstants.paddingMedium,
+                AppConstants.paddingLarge,
+                0,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _getGreeting(),
+                          style: AppTextStyles.bodyMedium,
+                        ),
+                        const SizedBox(height: 4),
+                        ShaderMask(
+                          shaderCallback: (bounds) =>
+                              AppColors.primaryGradient
+                                  .createShader(bounds),
+                          child: Text(
+                            user.fullName.split(' ').first,
+                            style: GoogleFonts.inter(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _getMotivation(),
+                          style: AppTextStyles.bodySmall.copyWith(
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Çıkış butonu
+                  IconButton(
+                    icon: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceLight
+                            .withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color:
+                              Colors.white.withValues(alpha: 0.06),
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.logout_rounded,
+                        color: AppColors.textSecondary,
+                        size: 20,
+                      ),
+                    ),
+                    onPressed: () => _confirmLogout(context),
+                  ),
+                ],
+              ),
+            ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            'Bugün de antrenman zamanı!',
-            style: AppTextStyles.bodyMedium,
-          ),
-          const SizedBox(height: 24),
+        ),
 
-          // ── Üyelik Kartı ──
-          MembershipCard(user: user),
-          const SizedBox(height: 24),
-
-          // ── QR Kod Alanı ──
-          DynamicQrWidget(
-            qrData: _memberVM!.qrData,
-            secondsRemaining: _memberVM!.qrSecondsRemaining,
-            isMembershipActive: _memberVM!.isMembershipActive,
+        // ── İçerik ──
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(
+            AppConstants.paddingMedium,
+            0,
+            AppConstants.paddingMedium,
+            100, // BottomNavBar için alan
           ),
-          const SizedBox(height: 24),
-        ],
-      ),
+          sliver: SliverList(
+            delegate: SliverChildListDelegate([
+              const SizedBox(height: 8),
+
+              // ── Üyelik Kartı ──
+              MembershipCard(user: user),
+              const SizedBox(height: 24),
+
+              // ── QR Kod Alanı ──
+              DynamicQrWidget(
+                qrData: _memberVM!.qrData,
+                secondsRemaining: _memberVM!.qrSecondsRemaining,
+                isMembershipActive: _memberVM!.isMembershipActive,
+              ),
+              const SizedBox(height: 24),
+            ]),
+          ),
+        ),
+      ],
     );
   }
 
@@ -161,7 +259,7 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.card,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text('Çıkış Yap', style: AppTextStyles.h3),
         content: Text(
           'Oturumunuzu kapatmak istediğinize emin misiniz?',

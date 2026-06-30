@@ -1,24 +1,27 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../data/models/app_user.dart';
+import '../data/models/attendance_record.dart';
 import '../data/models/membership_package.dart';
 import '../data/repositories/auth_repository.dart';
 import '../data/repositories/user_repository.dart';
 import '../core/enums/user_role.dart';
 
 /// Admin paneli iş mantığı.
-/// Üye ekleme, düzenleme, paket yönetimi.
+/// Üye ekleme, düzenleme, paket yönetimi ve QR giriş doğrulama.
 class AdminViewModel extends ChangeNotifier {
   final UserRepository _userRepo;
   final AuthRepository _authRepo;
 
   List<AppUser> _members = [];
   List<MembershipPackage> _packages = [];
+  List<AttendanceRecord> _todayAttendance = [];
   bool _isLoading = false;
   String? _error;
   String? _successMessage;
   StreamSubscription? _membersSubscription;
   StreamSubscription? _packagesSubscription;
+  StreamSubscription? _attendanceSubscription;
 
   AdminViewModel({
     required UserRepository userRepo,
@@ -31,14 +34,16 @@ class AdminViewModel extends ChangeNotifier {
   // ── Getter'lar ──
   List<AppUser> get members => _members;
   List<MembershipPackage> get packages => _packages;
+  List<AttendanceRecord> get todayAttendance => _todayAttendance;
   bool get isLoading => _isLoading;
   String? get error => _error;
   String? get successMessage => _successMessage;
   int get totalMembers => _members.length;
   int get activeMembers =>
       _members.where((m) => m.isMembershipActive).length;
+  int get todayAttendanceCount => _todayAttendance.length;
 
-  /// Üye ve paket stream'lerini başlatır.
+  /// Üye, paket ve attendance stream'lerini başlatır.
   void _initStreams() {
     _membersSubscription = _userRepo.watchAllMembers().listen(
       (members) {
@@ -53,13 +58,81 @@ class AdminViewModel extends ChangeNotifier {
 
     _packagesSubscription = _userRepo.watchAllPackages().listen(
       (packages) {
-        _packages = packages;
+        if (packages.isEmpty) {
+          _packages = const [
+            MembershipPackage(
+              id: 'pkg_1m',
+              name: '1 Aylık Paket',
+              durationDays: 30,
+              price: 500,
+            ),
+            MembershipPackage(
+              id: 'pkg_3m',
+              name: '3 Aylık Paket',
+              durationDays: 90,
+              price: 1300,
+            ),
+          ];
+        } else {
+          _packages = packages;
+        }
         notifyListeners();
       },
       onError: (e) {
         _error = 'Paketler yüklenirken hata oluştu.';
         notifyListeners();
       },
+    );
+
+    _attendanceSubscription = _userRepo.watchTodayAttendance().listen(
+      (records) {
+        _todayAttendance = records;
+        notifyListeners();
+      },
+      onError: (e) {
+        // Attendance hatası kritik değil, sessizce geçilebilir
+      },
+    );
+  }
+
+  /// QR kodu doğrular ve giriş kaydı oluşturur.
+  /// Başarılıysa üye adını, başarısızsa hata mesajını döner.
+  Future<({bool success, String message})> verifyAndRecordEntry(
+      String qrData) async {
+    // QR hash doğrulama
+    final uid = _userRepo.verifyQrCode(qrData);
+    if (uid == null) {
+      return (success: false, message: 'Geçersiz veya süresi dolmuş QR kod.');
+    }
+
+    // Kullanıcıyı getir
+    final user = await _userRepo.getUserById(uid);
+    if (user == null) {
+      return (success: false, message: 'Kullanıcı bulunamadı.');
+    }
+
+    // Üyelik durumunu kontrol et
+    if (!user.isMembershipActive) {
+      return (
+        success: false,
+        message: '${user.fullName} — Üyelik süresi dolmuş!'
+      );
+    }
+
+    // Giriş kaydı oluştur
+    final record = AttendanceRecord(
+      id: '',
+      uid: uid,
+      fullName: user.fullName,
+      checkInTime: DateTime.now(),
+      verifiedByAdmin: true,
+    );
+
+    await _userRepo.recordAttendance(record);
+
+    return (
+      success: true,
+      message: '${user.fullName} — Giriş onaylandı!'
     );
   }
 
@@ -69,8 +142,8 @@ class AdminViewModel extends ChangeNotifier {
     required String password,
     required String fullName,
     required String phone,
-    required String packageName,
-    required DateTime membershipEnd,
+    String? packageName,
+    DateTime? membershipEnd,
   }) async {
     _setLoading(true);
     _clearMessages();
@@ -90,9 +163,9 @@ class AdminViewModel extends ChangeNotifier {
         phone: phone,
         role: UserRole.member,
         packageName: packageName,
-        membershipStart: DateTime.now(),
+        membershipStart: membershipEnd != null ? DateTime.now() : null,
         membershipEnd: membershipEnd,
-        isActive: true,
+        isActive: membershipEnd != null,
         createdAt: DateTime.now(),
       );
 
@@ -198,6 +271,7 @@ class AdminViewModel extends ChangeNotifier {
   void dispose() {
     _membersSubscription?.cancel();
     _packagesSubscription?.cancel();
+    _attendanceSubscription?.cancel();
     super.dispose();
   }
 }

@@ -1,9 +1,9 @@
-/// AnkaFitness uygulama sabitleri.
+/// QR Prototype uygulama sabitleri.
 class AppConstants {
   AppConstants._();
 
-  // ── Uygulama Bilgileri ──
-  static const String appName = 'AnkaFitness';
+  // ── Genel ──
+  static const String appName = 'QR Prototype';
   static const String appVersion = '1.0.0';
 
   // ── QR Kod Ayarları ──
@@ -17,6 +17,7 @@ class AppConstants {
   // ── Firestore Koleksiyon Adları ──
   static const String usersCollection = 'users';
   static const String packagesCollection = 'packages';
+  static const String attendanceCollection = 'attendance';
 
   // ── Kullanıcı Rolleri ──
   static const String roleAdmin = 'admin';

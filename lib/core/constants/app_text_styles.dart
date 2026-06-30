@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
-/// AnkaFitness tipografi stilleri.
+/// QR Prototype tipografi stilleri.
 /// Google Fonts Inter kullanılarak modern ve okunabilir bir tipografi.
 class AppTextStyles {
   AppTextStyles._();

@@ -6,8 +6,8 @@ import 'viewmodels/auth_viewmodel.dart';
 
 /// Uygulamanın kök widget'ı.
 /// Tema ve navigasyon yapılandırmasını içerir.
-class AnkaFitnessApp extends StatelessWidget {
-  const AnkaFitnessApp({super.key});
+class QrPrototypeApp extends StatelessWidget {
+  const QrPrototypeApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +15,7 @@ class AnkaFitnessApp extends StatelessWidget {
     final router = AppRouter.router(authViewModel);
 
     return MaterialApp.router(
-      title: 'AnkaFitness',
+      title: 'QR Prototype',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
       routerConfig: router,

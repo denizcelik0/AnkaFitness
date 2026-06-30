@@ -5,6 +5,8 @@ import '../../views/shared/splash_screen.dart';
 import '../../views/admin/admin_dashboard_screen.dart';
 import '../../views/admin/add_member_screen.dart';
 import '../../views/admin/member_detail_screen.dart';
+import '../../views/admin/qr_scanner_screen.dart';
+import '../../views/admin/attendance_log_screen.dart';
 import '../../views/member/member_home_screen.dart';
 import '../../views/member/workout_screen.dart';
 
@@ -64,6 +66,14 @@ class AppRouter {
               builder: (context, state) => MemberDetailScreen(
                 memberUid: state.pathParameters['uid']!,
               ),
+            ),
+            GoRoute(
+              path: 'scanner',
+              builder: (context, state) => const QrScannerScreen(),
+            ),
+            GoRoute(
+              path: 'attendance',
+              builder: (context, state) => const AttendanceLogScreen(),
             ),
           ],
         ),

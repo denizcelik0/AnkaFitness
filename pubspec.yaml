@@ -1,5 +1,5 @@
 name: anka_fitness
-description: "AnkaFitness - Spor Salonu Üye Yönetim ve Giriş Uygulaması"
+description: "QR Prototype - Spor Salonu Üye Yönetim ve Giriş Uygulaması"
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -23,6 +23,9 @@ dependencies:
 
   # QR Code
   qr_flutter: ^4.1.0
+
+  # QR Scanner (Admin tarafı)
+  mobile_scanner: ^7.0.1
 
   # Security (Dinamik QR hash)
   crypto: ^3.0.6

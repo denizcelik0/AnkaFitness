@@ -1,6 +1,9 @@
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:crypto/crypto.dart';
 import '../../core/constants/app_constants.dart';
 import '../models/app_user.dart';
+import '../models/attendance_record.dart';
 import '../models/membership_package.dart';
 
 /// Firestore kullanıcı ve paket işlemlerini yöneten repository.
@@ -102,4 +105,63 @@ class UserRepository {
         .doc(packageId)
         .delete();
   }
+
+  /// ─── Giriş Kaydı (Attendance) İşlemleri ───
+
+  /// Giriş kaydını Firestore'a yazar.
+  Future<void> recordAttendance(AttendanceRecord record) async {
+    await _firestore
+        .collection(AppConstants.attendanceCollection)
+        .add(record.toFirestore());
+  }
+
+  /// Bugünkü giriş kayıtlarını gerçek zamanlı dinler.
+  Stream<List<AttendanceRecord>> watchTodayAttendance() {
+    final now = DateTime.now();
+    final startOfDay = DateTime(now.year, now.month, now.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1));
+
+    return _firestore
+        .collection(AppConstants.attendanceCollection)
+        .where('checkInTime',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+        .where('checkInTime', isLessThan: Timestamp.fromDate(endOfDay))
+        .orderBy('checkInTime', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => AttendanceRecord.fromFirestore(doc))
+            .toList());
+  }
+
+  /// QR kod verisini doğrular.
+  /// QR veri formatı: "uid:hash"
+  /// HMAC-SHA256 ile zaman penceresine dayalı hash kontrolü.
+  /// Başarılıysa kullanıcının uid'sini döner, başarısızsa null.
+  String? verifyQrCode(String qrData) {
+    final parts = qrData.split(':');
+    if (parts.length != 2) return null;
+
+    final uid = parts[0];
+    final receivedHash = parts[1];
+
+    // Şu anki ve bir önceki zaman penceresini kontrol et (tolerans)
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final windowSize = AppConstants.qrRefreshIntervalSeconds * 1000;
+
+    for (int offset = 0; offset <= 1; offset++) {
+      final timeWindow = (now ~/ windowSize) - offset;
+      final message = '$uid|$timeWindow';
+      final key = utf8.encode(AppConstants.qrSecretKey);
+      final bytes = utf8.encode(message);
+      final hmacSha256 = Hmac(sha256, key);
+      final digest = hmacSha256.convert(bytes);
+
+      if (digest.toString() == receivedHash) {
+        return uid;
+      }
+    }
+
+    return null;
+  }
 }
+
